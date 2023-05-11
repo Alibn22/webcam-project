@@ -12,7 +12,7 @@ const Webcam = (props) => {
         <Webcams 
         audio={props.audio} 
         mirrored={true} 
-        ref={props.WebcamRef} 
+        ref={props.webcamref} 
         width={500}
         high={720}
         videoConstraints={videoConstraints}
