@@ -7,6 +7,15 @@ const WebcamRecorder = () => {
     const [capturing, setCapturing] = React.useState(false);
     const [recordedChunks, setRecordedChunks] = React.useState([]);
 
+    const handleDataAvailable = React.useCallback(
+        ({ data }) => {
+            if (data.size > 0) {
+                setRecordedChunks((prev) => prev.concat(data));
+            }
+        },
+        [setRecordedChunks]
+    );
+
     const handleStartCaptureClick = React.useCallback(() => {
         setCapturing(true);
         
@@ -18,21 +27,11 @@ const WebcamRecorder = () => {
             handleDataAvailable
         );
         mediaRecorderRef.current.start();
-    }, [webcamRef, setCapturing, mediaRecorderRef]);
-
-    const handleDataAvailable = React.useCallback(
-        ({ data }) => {
-            if (data.size > 0) {
-                setRecordedChunks((prev) => prev.concat(data));
-            }
-        },
-        [setRecordedChunks]
-    );
-
-    const handleStopCaptureClick = React.useCallback(() => {
-        mediaRecorderRef.current.stop();
-        setCapturing(false);
-    }, [mediaRecorderRef, webcamRef, setCapturing]);
+        setTimeout(() => {
+            mediaRecorderRef.current.stop();
+            setCapturing(false);
+        }, 20000);
+    }, [webcamRef, setCapturing, mediaRecorderRef,handleDataAvailable]);
 
     const handleDownload = React.useCallback(() => {
         if (recordedChunks.length) {
@@ -53,10 +52,10 @@ const WebcamRecorder = () => {
 
     return (
         <>
-            <Webcam webcam={{audio:true,ref:webcamRef}} button={capturing?
-                {name:'توقف ضبط',title:'توقف ضبط',handler:()=>handleStopCaptureClick()} : 
-                {name:'شروع ضبط',title:'شروع ضبط',handler:()=>handleStartCaptureClick()}
+            <Webcam webcam={{audio:true,ref:webcamRef}} button={
+                {name:'ضبط',title:'ضبط',handler:()=>handleStartCaptureClick(),disabled:capturing}
             } />
+            
             {recordedChunks.length > 0 && (
                 <button onClick={handleDownload}>Download</button>
             )}
