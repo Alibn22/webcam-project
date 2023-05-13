@@ -1,24 +1,35 @@
 import Webcam from '../../templates/webcam/template'
-import React from 'react'
+import  { useCallback, useRef, useState } from 'react'
+import axios from '../../../utils/config/serverConfig'
 
 const WebcamRecorder = () => {
-    const webcamRef = React.useRef(null);
-    const mediaRecorderRef = React.useRef(null);
-    const [capturing, setCapturing] = React.useState(false);
-    const [recordedChunks, setRecordedChunks] = React.useState([]);
+    const webcamRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const [videoSrc,setVideoSrc] = useState()
+    const [videoSize,setVideoSize] = useState()
+    const [capturing, setCapturing] = useState(false);
+    const [percent,setPercent] = useState(0)
+    const [upload,setUpload] = useState(false)
+    const [recordedChunks, setRecordedChunks] = useState([]);
 
-    const handleDataAvailable = React.useCallback(
+    const handleDataAvailable = useCallback(
         ({ data }) => {
             if (data.size > 0) {
                 setRecordedChunks((prev) => prev.concat(data));
+                const blob = new Blob([data], {
+                    type: "video/webm"
+                });
+                const url = URL.createObjectURL(blob);
+                setVideoSrc(url)
+                setVideoSize((data.size/1000000).toFixed(2))
             }
         },
         [setRecordedChunks]
     );
 
-    const handleStartCaptureClick = React.useCallback(() => {
+    const handleStartCaptureClick = useCallback(() => {
         setCapturing(true);
-        
+
         mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
             mimeType: "video/webm"
         });
@@ -31,34 +42,45 @@ const WebcamRecorder = () => {
             mediaRecorderRef.current.stop();
             setCapturing(false);
         }, 20000);
-    }, [webcamRef, setCapturing, mediaRecorderRef,handleDataAvailable]);
+    }, [webcamRef, setCapturing, mediaRecorderRef, handleDataAvailable]);
 
-    const handleDownload = React.useCallback(() => {
-        if (recordedChunks.length) {
-            const blob = new Blob(recordedChunks, {
-                type: "video/webm"
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none";
-            a.href = url;
-            a.download = "react-webcam-stream-capture.webm";
-            a.click();
-            window.URL.revokeObjectURL(url);
-            setRecordedChunks([]);
+    const handleUpload = () =>{
+        const videoFile = new File([videoSrc],'recorder',{lastModified:new Date()})
+        const formData = new FormData();
+        formData.append('file', videoFile);
+        setUpload(true)
+        axios.post('/upload',formData,{
+            onUploadProgress:(progressEvent) => {
+                const {loaded, total} = progressEvent;
+                let percent = Math.floor((loaded * 100) / total)
+                setPercent(percent)
+        }}).then(res=>{
+            if(res.status===200){
+                setUpload(false)
+                setPercent(0)
+                setRecordedChunks([])
+            }
+        }).catch(error=>{
+            console.log(error)
         }
-    }, [recordedChunks]);
+
+        )
+    }
 
     return (
         <>
-            <Webcam webcam={{audio:true,ref:webcamRef}} button={
-                {name:'ضبط',title:'ضبط',handler:()=>handleStartCaptureClick(),disabled:capturing}
+            <Webcam 
+            webcam={{ audio: true, ref: webcamRef }} 
+            capturing={recordedChunks.length > 0} 
+            pereview={{src:videoSrc}}
+            videoSize = {videoSize} 
+            percent={percent}
+            upload={upload}
+            button={[
+                { name: 'ضبط', title: 'ضبط', onClick: () => handleStartCaptureClick(), disabled: capturing },
+                { name: 'ارسال', title: 'ارسال', onClick: () => handleUpload() }
+            ]
             } />
-            
-            {recordedChunks.length > 0 && (
-                <button onClick={handleDownload}>Download</button>
-            )}
         </>
     );
 }
