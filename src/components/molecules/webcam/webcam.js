@@ -4,7 +4,7 @@ import Button from '../../atoms/button/button'
 const Webcam = ({webcam,button}) => {
 
     return (
-        <div style={{display:'flex',flexDirection:'column'}}>
+        <div className='container' >
             <WebcamComponent audio={webcam.audio} webcamref={webcam.ref} />
             <Button name={button.name} title={button.title}  {...button}/>
         </div>

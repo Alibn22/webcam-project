@@ -3,4 +3,28 @@
 }
 
 
-
+.container{
+  display:flex;
+  flex-direction:column
+}
+.size{
+  margin-top: 20px;
+}
+.button{
+  width:fit-content;
+  min-width:200px;
+  height:50px;
+  align-self:center;
+  margin-top:20px;
+  border-radius: 16px;
+  background-color: darkblue;
+  color: white;
+  cursor: pointer;
+}
+.templateContainer{
+  width:100%;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-Items:center;
+}
