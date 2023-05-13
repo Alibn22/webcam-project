@@ -12,6 +12,7 @@ const WebcamRecorder = () => {
     const [percent, setPercent] = useState(0)
     const [upload, setUpload] = useState(false)
     const [recordedChunks, setRecordedChunks] = useState([]);
+    const myTimeout = useRef(null);
 
     const handleDataAvailable = useCallback(
         ({ data }) => {
@@ -39,11 +40,16 @@ const WebcamRecorder = () => {
             handleDataAvailable
         );
         mediaRecorderRef.current.start();
-        setTimeout(() => {
+        myTimeout.current = setTimeout(() => {
             mediaRecorderRef.current.stop();
             setCapturing(false);
         }, 20000);
     }, [webcamRef, setCapturing, mediaRecorderRef, handleDataAvailable]);
+    const handleStopCaptureClick = useCallback(() => {
+        mediaRecorderRef.current.stop();
+        clearTimeout(myTimeout.current)
+        setCapturing(false);
+    },[mediaRecorderRef,myTimeout]);
 
     const handleUpload = () => {
         const videoFile = new File([videoSrc], 'recorder', { lastModified: new Date() })
@@ -89,7 +95,8 @@ const WebcamRecorder = () => {
                 percent={percent}
                 upload={upload}
                 button={[
-                    { name: 'record', title: 'ضبط', onClick: () => handleStartCaptureClick(), disabled: capturing },
+                    !capturing?{ name: 'record', title: 'ضبط', onClick: () => handleStartCaptureClick() }:
+                    { name: 'stop', title: 'توقف', onClick: () => handleStopCaptureClick() },
                     { name: 'send', title: 'ارسال', onClick: () => handleUpload() },
                     {name:'cancel',title:'لغو',onClick:()=>setRecordedChunks([])}
                 ]
