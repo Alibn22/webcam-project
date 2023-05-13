@@ -69,6 +69,11 @@ const WebcamRecorder = () => {
             }
         }).catch(error => {
             console.log(error)
+            toast.error('ارسال ویدیو با خطا مواجه شد.', {
+                position: "top-right",
+                autoClose: 5000,
+                theme: "colored",
+            });
         }
 
         )
@@ -84,8 +89,9 @@ const WebcamRecorder = () => {
                 percent={percent}
                 upload={upload}
                 button={[
-                    { name: 'ضبط', title: 'ضبط', onClick: () => handleStartCaptureClick(), disabled: capturing },
-                    { name: 'ارسال', title: 'ارسال', onClick: () => handleUpload() }
+                    { name: 'record', title: 'ضبط', onClick: () => handleStartCaptureClick(), disabled: capturing },
+                    { name: 'send', title: 'ارسال', onClick: () => handleUpload() },
+                    {name:'cancel',title:'لغو',onClick:()=>setRecordedChunks([])}
                 ]
                 } />
             <ToastContainer
