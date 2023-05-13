@@ -1,15 +1,16 @@
 import Webcam from '../../templates/webcam/template'
-import  { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import axios from '../../../utils/config/serverConfig'
+import { ToastContainer, toast } from 'react-toastify';
 
 const WebcamRecorder = () => {
     const webcamRef = useRef(null);
     const mediaRecorderRef = useRef(null);
-    const [videoSrc,setVideoSrc] = useState()
-    const [videoSize,setVideoSize] = useState()
+    const [videoSrc, setVideoSrc] = useState()
+    const [videoSize, setVideoSize] = useState()
     const [capturing, setCapturing] = useState(false);
-    const [percent,setPercent] = useState(0)
-    const [upload,setUpload] = useState(false)
+    const [percent, setPercent] = useState(0)
+    const [upload, setUpload] = useState(false)
     const [recordedChunks, setRecordedChunks] = useState([]);
 
     const handleDataAvailable = useCallback(
@@ -21,7 +22,7 @@ const WebcamRecorder = () => {
                 });
                 const url = URL.createObjectURL(blob);
                 setVideoSrc(url)
-                setVideoSize((data.size/1000000).toFixed(2))
+                setVideoSize((data.size / 1000000).toFixed(2))
             }
         },
         [setRecordedChunks]
@@ -44,23 +45,29 @@ const WebcamRecorder = () => {
         }, 20000);
     }, [webcamRef, setCapturing, mediaRecorderRef, handleDataAvailable]);
 
-    const handleUpload = () =>{
-        const videoFile = new File([videoSrc],'recorder',{lastModified:new Date()})
+    const handleUpload = () => {
+        const videoFile = new File([videoSrc], 'recorder', { lastModified: new Date() })
         const formData = new FormData();
         formData.append('file', videoFile);
         setUpload(true)
-        axios.post('/upload',formData,{
-            onUploadProgress:(progressEvent) => {
-                const {loaded, total} = progressEvent;
+        axios.post('/upload', formData, {
+            onUploadProgress: (progressEvent) => {
+                const { loaded, total } = progressEvent;
                 let percent = Math.floor((loaded * 100) / total)
                 setPercent(percent)
-        }}).then(res=>{
-            if(res.status===200){
+            }
+        }).then(res => {
+            if (res.status === 200) {
                 setUpload(false)
                 setPercent(0)
                 setRecordedChunks([])
+                toast.success('ارسال ویدیو با موفقیت انجام شد.', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    theme: "colored",
+                });
             }
-        }).catch(error=>{
+        }).catch(error => {
             console.log(error)
         }
 
@@ -69,18 +76,26 @@ const WebcamRecorder = () => {
 
     return (
         <>
-            <Webcam 
-            webcam={{ audio: true, ref: webcamRef }} 
-            capturing={recordedChunks.length > 0} 
-            pereview={{src:videoSrc}}
-            videoSize = {videoSize} 
-            percent={percent}
-            upload={upload}
-            button={[
-                { name: 'ضبط', title: 'ضبط', onClick: () => handleStartCaptureClick(), disabled: capturing },
-                { name: 'ارسال', title: 'ارسال', onClick: () => handleUpload() }
-            ]
-            } />
+            <Webcam
+                webcam={{ audio: true, ref: webcamRef }}
+                capturing={recordedChunks.length > 0}
+                pereview={{ src: videoSrc }}
+                videoSize={videoSize}
+                percent={percent}
+                upload={upload}
+                button={[
+                    { name: 'ضبط', title: 'ضبط', onClick: () => handleStartCaptureClick(), disabled: capturing },
+                    { name: 'ارسال', title: 'ارسال', onClick: () => handleUpload() }
+                ]
+                } />
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={true}
+                closeOnClick
+                rtl={true}
+                theme="colored"
+            />
         </>
     );
 }
