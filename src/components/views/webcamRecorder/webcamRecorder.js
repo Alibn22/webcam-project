@@ -49,14 +49,19 @@ const WebcamRecorder = () => {
         mediaRecorderRef.current.stop();
         clearTimeout(myTimeout.current)
         setCapturing(false);
-    },[mediaRecorderRef,myTimeout]);
+    }, [mediaRecorderRef, myTimeout]);
 
     const handleUpload = () => {
-        const videoFile = new File([videoSrc], 'recorder', { lastModified: new Date() })
+        const blob = new Blob(recordedChunks, {
+            type: "video/webm"
+        });
         const formData = new FormData();
-        formData.append('file', videoFile);
+        formData.append('video', blob);
         setUpload(true)
         axios.post('/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
             onUploadProgress: (progressEvent) => {
                 const { loaded, total } = progressEvent;
                 let percent = Math.floor((loaded * 100) / total)
@@ -95,10 +100,10 @@ const WebcamRecorder = () => {
                 percent={percent}
                 upload={upload}
                 button={[
-                    !capturing?{ name: 'record', title: 'ضبط', onClick: () => handleStartCaptureClick() }:
-                    { name: 'stop', title: 'توقف', onClick: () => handleStopCaptureClick() },
+                    !capturing ? { name: 'record', title: 'ضبط', onClick: () => handleStartCaptureClick() } :
+                        { name: 'stop', title: 'توقف', onClick: () => handleStopCaptureClick() },
                     { name: 'send', title: 'ارسال', onClick: () => handleUpload() },
-                    {name:'cancel',title:'لغو',onClick:()=>setRecordedChunks([])}
+                    { name: 'cancel', title: 'لغو', onClick: () => setRecordedChunks([]) }
                 ]
                 } />
             <ToastContainer
